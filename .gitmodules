@@ -1,0 +1,3 @@
+[submodule "MediaStreamRecorder"]
+	path = MediaStreamRecorder
+	url = git@github.com:streamproc/MediaStreamRecorder.git
