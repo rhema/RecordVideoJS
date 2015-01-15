@@ -7,6 +7,8 @@
 -->
 <!DOCTYPE html>
 <html lang="en">
+	
+	
     <head>
         <title>WebRTC Video Recording using MediaStreamRecorder</title>
         
@@ -15,11 +17,10 @@
             src="../MediaStreamRecorder-v1.2.js"
             data-require="WhammyRecorder,MediaRecorder"
         -->
-        <script 
+        <script
             src="https://cdn.webrtc-experiment.com/MediaStreamRecorder-v1.2.js" 
             data-require="WhammyRecorder,MediaRecorder"
-            data-scripts-dir="https://cdn.webrtc-experiment.com/msr/"
-        >
+            data-scripts-dir="https://cdn.webrtc-experiment.com/msr/">
         </script>
         
         <script src="ccv.js"></script>
@@ -29,13 +30,44 @@
 			//ping for face detection....
 			
 			// var v = document.getElementById('v');
-			var pollFramesInterval = 3000;
+			var pollFramesInterval = 100;
 			
+			var px=0;
+			var py=0;
+			var pw = 320;
+			var ph = 240;
 			function faceCheckPoller()
 			{
-				console.log("ping!");
+				// console.log("ping!");
 				 setTimeout("faceCheckPoller()", pollFramesInterval);
-				 // var v = document.getElementById('webcam-video'); TBD, draw to hidden canvas soon. Pass canvas to ccv during that poll...
+				 var v = document.getElementById('webcam-video');// TBD, draw to hidden canvas soon. Pass canvas to ccv during that poll...
+				 if(v)
+				 {
+				 var canvas = document.getElementById('hideme');
+				 canvas.width = 320;
+				 canvas.height = 240;
+    		     var context = canvas.getContext('2d');
+    		     context.drawImage(v,px,py,pw,ph);
+    		     var comp = ccv.detect_objects( {
+					canvas: canvas,
+					cascade: cascade,
+					interval: 4,
+					min_neighbors: 1
+    		     });
+    		     context.strokeStyle = 'red';
+    		     context.lineWidth = 7;
+    		     context.clearRect ( 0 , 0 , canvas.width, canvas.height );
+    		     context.rect(0,0,10,10);
+    		     
+    		     // console.log(comp);
+    		     if(comp.length>0)
+    		     {
+    		     	var face = comp[0];
+    		     	context.rect(face.x,face.y,face.width,face.height);
+    		     }
+				 // 
+				 context.stroke();
+				 }
 			}
 			setTimeout("faceCheckPoller()", pollFramesInterval);
 			
@@ -51,6 +83,45 @@
                 width: 60px;
                 text-align: center;
             }
+            
+            
+    #container {
+    width: 320px;
+    height: 240px;
+    position: relative;
+    
+	}
+	
+ 
+	#hideme {
+	    width: 320px;
+	    height: 240px;
+	    position: absolute;
+	    top: 0;
+	    left: 0;
+/*	    background-color:red;*/
+	}
+	
+	#videos-container, 
+ {
+	    width: 320px;
+	    height: 240px;
+	    position: absolute;
+	    top: 0;
+	    left: 0;
+	}
+	
+	#hideme {
+	    z-index: 10;
+	    /*opacity: .7;*/
+/*	    background-color: red;*/
+	}
+	#videos-container
+	{
+		
+	}
+            
+            
         </style>
     </head>
     <body>
@@ -72,9 +143,13 @@
             <button id="start-recording">Start Recording</button>
             <button id="stop-recording" disabled>Stop Recording</button>
         </div>
-        <div id="videos-container">
-        	<canvas id="hideme">
-        	</canvas>
+        <div id="container">
+        	
+	        	
+	        <div id="videos-container">
+	        	
+	        </div>
+	        <canvas id="hideme"></canvas>
         </div>
         <script>
             var mediaConstraints = { audio: !!navigator.mozGetUserMedia, video: true };
@@ -179,7 +254,7 @@ function onMediaSuccess(stream) {
         var blobURL = URL.createObjectURL(blob);
         document.write('&lt;a href="' + blobURL + '"&gt;' + blobURL + '&lt;/a&gt;');
     };
-    mediaRecorder.start(3000);
+    mediaRecorder.start(300);
 }
 
 function onMediaError(e) {
