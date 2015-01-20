@@ -26,6 +26,24 @@
 		<script src="face.js"></script>
 
 		<script>
+
+		/////////http://stackoverflow.com/questions/19491336/get-url-parameter-jquery		
+		function getUrlParameter(sParam)
+		{
+		    var sPageURL = window.location.search.substring(1);
+		    var sURLVariables = sPageURL.split('&');
+		    for (var i = 0; i < sURLVariables.length; i++) 
+		    {
+		        var sParameterName = sURLVariables[i].split('=');
+		        if (sParameterName[0] == sParam) 
+		        {
+		            return sParameterName[1];
+		        }
+		    }
+		}
+
+		
+		
 			//ping for face detection....
 
 			// var v = document.getElementById('v');
@@ -38,6 +56,7 @@
 			var py = 0;
 			var pw = 320;
 			var ph = 240;
+			var face_ratio = .5;// 5.0/8.0; // face detection does not measure from chin to head...
 
 			var recording = false;
 
@@ -61,6 +80,40 @@
 
 			}
 			
+			var countdown_left = 5;
+			function startCountdown()
+			{
+				if(countdown_left <= 0)
+				{
+					
+					$("#instructions").html( "<p> Hold still.</p><h1>Look at the webcam!</h1> <h1>"+seconds_left+"</h1>" );
+					if(seconds_left <= 0)
+					{
+						$("#instructions").hide();
+					}
+					
+					setTimeout("startCountdown()", 1000);
+					return;
+				}
+				countdown_left -= 1;
+				$("#instructions").html( "<p> About to record in... " +countdown_left+ "</p><h1>Perfect. Look at the webcam!</h1>" )
+				$("#instructions").show()
+				setTimeout("startCountdown()", 1000);
+				
+				//only once
+				if(countdown_left <= 0)
+				{
+					var timeInterval = total_seconds_to_save * 1000;
+					mediaRecorder.width = pw;
+					mediaRecorder.height = ph;
+					mediaRecorder.start(timeInterval); // called more than once...
+					countTilZero();
+				}
+				
+			}
+			
+			
+			
 			function faceCheckPoller() {
 				if(finishedRecording == true)
 				{
@@ -73,12 +126,15 @@
 				if(v) {
 
 					if(count_good < 9000) {
+						
+						var ideal = face_ratio*ph;//128.0;
+						console.log("THE IDEAL "+ ideal);
+						var tollerence = .1*ideal;
 
 						if(context == 0) {
-
 							canvas = document.getElementById('hideme');
-							canvas.width = 320;
-							canvas.height = 240;
+							canvas.width = pw;
+							canvas.height = ph;
 							context = canvas.getContext('2d');
 						}
 
@@ -96,7 +152,8 @@
 						context.beginPath();
 						context.lineWidth = 5;
 						context.strokeStyle = 'green';
-						context.arc(320 / 2, 240 / 2, 128 / 2, 0, 2 * Math.PI, false);
+						//context.arc(pw / 2, ph / 2, ideal / 2, 0, 2 * Math.PI, false);
+						context.arc(pw / 2, ph / 2, ideal / 2, 0, 2 * Math.PI, false);
 						context.stroke();
 						// context.fillStyle = 'green';
 						// context.fill();
@@ -109,7 +166,7 @@
 							last_face_detected = face;
 						}
 
-						var face_ideal = 0;
+						var face_ideal = 0; //used?
 						// console.log("ping!");
 						// console.log(video)
 						// if(video == 0)
@@ -118,8 +175,7 @@
 						// $("#header").html("No camera detected. Please allow your webcam to be turned on");
 						// }
 
-						var ideal = 128.0;
-						var tollerence = 10.0;
+						
 
 						// $("#header").html("Video started...");
 						if(last_face_detected != 0) {
@@ -143,8 +199,8 @@
 							var b = 2;
 							score = 50 - (Math.max(Math.abs(closeness) - tollerence, 0));
 
-							var ix = 320 / 2.0;
-							var iy = 240 / 2.0;
+							var ix = pw / 2.0;
+							var iy = ph / 2.0;
 							//maybe higher?
 							var rx = last_face_detected.x + last_face_detected.width * .5;
 							var ry = last_face_detected.y + last_face_detected.width * .5;
@@ -193,18 +249,18 @@
 							if(count_good > 10 && recording == false) {
 								recording = true;
 								//MORE
-								var timeInterval = total_seconds_to_save * 1000;
+								
 
 								//may need to make this better...
 
 								// get blob after specific time interval
-								mediaRecorder.start(timeInterval);
-								countTilZero();
-
+								
+								
 								context.clearRect(0, 0, canvas.width, canvas.height);
 								// CLEOR
 
 								count_good = 9001;
+								startCountdown();
 
 							}
 
@@ -239,6 +295,7 @@
 			text-align: center;
 			}
 
+			/*Maybe no change needed...*/
 			#container {
 			width: 320px;
 			height: 240px;
@@ -255,6 +312,17 @@
 			/*	    background-color:red;*/
 			z-index: 10;
 			opacity: .4;
+			}
+			
+			#instructions
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: 100;
+				background-color: rgba(255, 255, 255, 0.7);
 			}
 
 			#videos-container,
@@ -275,11 +343,11 @@
 			<label for="time-interval">Time Interval (milliseconds):</label>
 			<input type="text" id="time-interval" value="6000">
 
-			<label for="video-width">Video Width:</label>
+<!-- 			<label for="video-width">Video Width:</label>
 			<input type="text" id="video-width" value="320">
 
 			<label for="video-height">Video Height:</label>
-			<input type="text" id="video-height" value="240">
+			<input type="text" id="video-height" value="240"> -->
 
 			<button id="start-recording">
 				Start Recording
@@ -296,6 +364,16 @@
 				<div id="container">
 					<div id="videos-container"></div>
 					<canvas id="hideme"></canvas>
+					<div id="instructions"  align="left">
+						
+						<p>Be sure to</p>
+						<ul>
+							<li>Keep your head facing straight forward. Both of your ears should be visible.</li>
+							<li>Look at your webcam, not the screen, once recording starts.</li>
+						</ul>
+						<center>	<input type="button" value="Got it." onclick="$('#instructions').hide()"/> </center>
+							
+					</div>
 				</div>
 			</center>
 		</div>
@@ -306,15 +384,7 @@
 				video : true
 			};
 
-			document.querySelector('#start-recording').onclick = function() {
-				this.disabled = true;
-				navigator.getUserMedia(mediaConstraints, onMediaSuccess, onMediaError);
-			};
 
-			document.querySelector('#stop-recording').onclick = function() {
-				this.disabled = true;
-				mediaRecorder.stop();
-			};
 
 			var mediaRecorder;
 			var video = 0;
@@ -365,13 +435,14 @@
 				video = document.createElement('video');
 				video.id = "webcam-video";
 
-				var videoWidth = document.getElementById('video-width').value || 320;
-				var videoHeight = document.getElementById('video-height').value || 240;
+				var videoWidth = pw;//document.getElementById('video-width').value || pw;
+				var videoHeight = ph;//document.getElementById('video-height').value || ph;
 
+				
 				video = mergeProps(video, {
 					controls : true,
-					width : videoWidth,
-					height : videoHeight,
+					width : pw,
+					height : ph,
 					src : URL.createObjectURL(stream)
 				});
 				video.play();
@@ -382,8 +453,9 @@
 				mediaRecorder = new MediaStreamRecorder(stream);
 				mediaRecorder.mimeType = 'video/webm';
 				// this line is mandatory
-				mediaRecorder.videoWidth = videoWidth;
-				mediaRecorder.videoHeight = videoHeight;
+				console.log("RECORDER TIME... "+pw +" "+ph);
+				mediaRecorder.videoWidth = pw;
+				mediaRecorder.videoHeight = ph;
 				mediaRecorder.ondataavailable = function(blob) {
 					// console.log("NOT SAVING YET"); //please get..
 					// return;
@@ -398,29 +470,30 @@
 					// videosContainer.appendChild(a);
 					// videosContainer.appendChild(document.createElement('hr'));
 					// theblob = blob;
+					finishedRecording = true;
+					mediaRecorder.stop();
 					saveBlob(blob);
 					console.log("SAVING");
-					mediaRecorder.stop();
-					finishedRecording = true;// probably not really using this...
+					// probably not really using this...
 					$("#videos-container").remove();
 					//get rid of video... stop movint this stuff around.
 					
 				};
 
 				return 0;
-				//force a stop...
-				var timeInterval = document.querySelector('#time-interval').value;
-				if(timeInterval)
-					timeInterval = parseInt(timeInterval);
-				else
-					timeInterval = 5 * 1000;
-
-				//may need to make this better...
-
-				// get blob after specific time interval
-				mediaRecorder.start(timeInterval);
-
-				document.querySelector('#stop-recording').disabled = false;
+				// //force a stop...
+				// var timeInterval = document.querySelector('#time-interval').value;
+				// if(timeInterval)
+					// timeInterval = parseInt(timeInterval);
+				// else
+					// timeInterval = 5 * 1000;
+// 
+				// //may need to make this better...
+// 
+				// // get blob after specific time interval
+				// mediaRecorder.start(timeInterval);
+// 
+				// document.querySelector('#stop-recording').disabled = false;
 			}
 
 			function onMediaError(e) {
@@ -455,9 +528,42 @@
 		<script>
 			$(document).ready(function() {
 				console.log("k. get it started, plz");
+				var seconds = getUrlParameter("seconds");
+				var w = getUrlParameter("w");
+				var h = getUrlParameter("h");
+				var fr = getUrlParameter("face_ratio");
+				if(typeof seconds != "undefined")
+				{
+					total_seconds_to_save = seconds;
+					seconds_left = seconds;
+				}
+				if(typeof w != "undefined")
+					pw = Number(w);
+				if(typeof h != "undefined")
+					ph = Number(h);
+				if(typeof fr != "undefined")
+					face_ratio = Number(fr);
 				//wait to start video?
-
-				setTimeout('$("#start-recording").click();', 750)
+				
+				//set all containers...
+				//hideme
+				var con = ["#videos-container","#container","#hideme"];
+				for(var i=0; i<con.length; i+=1)
+				{
+					$(con[i]).css("width",pw+"px");
+					$(con[i]).css("height",ph+"px");
+				}
+				
+				document.querySelector('#start-recording').onclick = function() {
+				this.disabled = true;
+				navigator.getUserMedia(mediaConstraints, onMediaSuccess, onMediaError);
+				};
+	
+				document.querySelector('#stop-recording').onclick = function() {
+					this.disabled = true;
+					mediaRecorder.stop();
+				};
+				setTimeout('$("#start-recording").click();', 750);
 
 			});
 		</script>
