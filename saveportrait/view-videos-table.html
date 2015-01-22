@@ -29,9 +29,6 @@
 		 	
 		 }
 		 
-		 
-		 
-		 
 		 function get_sorted()
 		 {
 		 	var keys = Object.keys(all);
@@ -85,21 +82,44 @@
 
 		 }
 		 
+		 //https://gist.github.com/Japh/1500589
+		 function time_ago(time) {
+		    periods = new Array("second", "minute", "hour", "day", "week", "month", "year", "decade");
+		    lengths = new Array("60","60","24","7","4.35","12","10");
+		    
+		    nowdate = new Date();
+		    now = (nowdate.getTime() / 1000);
+		    
+		    difference = now - time;
+		    tense = "ago";
+		    
+		    for(j = 0; difference >= lengths[j] && j < lengths.length-1; j++) {
+		        difference /= lengths[j];
+		    }
+		    
+		    difference = Math.round(difference);
+		    
+		    if(difference != 1) {
+		        periods[j] += "s";
+		    }
+		    
+		    return difference + ' ' + periods[j] + ' ago';
+		}
 		 
-		 
-		 function get_next_old()
+		 function update_table()
 		 {
-		 	//how to LRU?
-		 	//Grr...
-		 	// go through each thing in queue...
+		 	var keys = get_sorted();
+		 	var inner_rows = "";
 		 	
-		 	//(1), sort twice: (1) most recent (2) number of plays.
-		 	//constuct new thing based on dict keys..
-		 	var keys = Object.keys(all);
-		 	keys.sort(function(a, b){return all[a].timestamp-all[b].timestamp});
-		 	keys.reverse();
-		 	keys.sort(function(a, b){return all[a].seen-all[b].seen});
-		 	return all[keys[0]];
+		 	for(var i=0; i<keys.length; i+=1)
+		 	{
+		 		var ahref = "<a href='" +keys[i]+ "'>" +keys[i]+ "</a>" 
+		 		inner_rows += "<tr><td>"+ahref+"</td> <td> "+all[keys[i]]['timestamp']+" </td> <td>" + time_ago(all[keys[i]]['timestamp']/1000.0)  + "</td></tr>";
+		 		
+		 	}
+		 	
+		 	$("#video_table").html("<table> <tr><td>Video</td> <td>timestamp</td> <td>Recorded</td>  </tr> " +inner_rows+ " </table>");
+		 	
 		 }
 		 
 		 var latest = 0;
@@ -126,8 +146,9 @@
   			   
   			   if(playing == false)
   			   {
-  			   	console.log("TOOK A POLL. NEEDED NEW VID.");
-  			   		next_video(); //start first video
+  			   	    console.log("TOOK A POLL. NEEDED NEW VID.");
+  			   		//next_video(); //start first video
+  			   		update_table();
   			   }
 			});
 		  	setTimeout("poll()", 1500);//not sure hw often to poll...
@@ -209,8 +230,11 @@
 	
 	
 	<body>
-		<div id=container>
-<!-- 			webm goes here -->
+		<div id="container">
+			<!-- 			webm goes here -->
+		</div>
+		<div id="video_table">
+			
 		</div>
 	</body>
 </html>

@@ -156,7 +156,7 @@
 						
 						var ideal = face_ratio*ph;//128.0;
 						console.log("THE IDEAL "+ ideal);
-						var tollerence = .1*ideal;
+						var tollerence = .025*ideal;
 
 						if(context == 0) {
 							canvas = document.getElementById('hideme');
@@ -273,7 +273,7 @@
 						if(score > 95) {
 							count_good += 1;
 							//start saving.
-							if(count_good > 10 && recording == false) {
+							if(count_good > 20 && recording == false) {
 								recording = true;
 								//MORE
 								
@@ -437,7 +437,8 @@
 				var filename = id + "-"+(new Date().getTime());
 				console.log(filename);
 				// $()
-				$("#header").html("Saving.... please wait");
+				//$("#header").html("Saving.... please wait");
+				//Done elsewhere...
 			  	var reader = new window.FileReader();
 		  		reader.readAsDataURL(blob); 
 	  		    reader.onloadend = function() {
@@ -498,6 +499,7 @@
 					// videosContainer.appendChild(document.createElement('hr'));
 					// theblob = blob;
 					finishedRecording = true;
+					$("#header").html(" <img src='http://i.imgur.com/WAO5PNY.gif'/> Saving.... please wait");
 					mediaRecorder.stop();
 					saveBlob(blob);
 					console.log("SAVING");
