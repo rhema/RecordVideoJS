@@ -8,16 +8,30 @@
 		<script>
 		 //TBD prefetch: http://blog.pearce.org.nz/2014/02/how-to-prefetch-videoaudio-files-for.html
 		 var all = {};
+		 var blacklist = {}
 		 
 		 var playing = false;
+		 var replay_videos = true;
+		 
+		 
 		 function next_video()
 		 {
 		 	console.log("NEXT VIDEO CALLED");
 		 	//take one from queue.. blag blag
 		 	// var video = queue.shift();
 		 	var video = get_next();
+		 	console.log("NEXT VID IS "+video);
+		 	if(video == false)
+		 	{
+		 		$("#container").html('');
+		 		return;
+		 	}
 		 	video.seen += 1;
 		 	playing = true;
+		 	if(replay_videos == false)
+		 	{
+		 		blacklist[video.file] = 1;//blacklist and do not play me again...
+		 	}
 		 	//add loop back?
 		 	$("#vid").unbind();
 		 	$("#container").html('<video autoplay id="vid"> <source src="'+video.file+'" type="video\/webm"> <\/video>');
@@ -34,7 +48,18 @@
 		 
 		 function get_sorted()
 		 {
-		 	var keys = Object.keys(all);
+		 	var maybe_keys = Object.keys(all);
+		 	
+		 	var keys = [];
+		 	for(var i=0; i<maybe_keys.length; i+=1)
+		 	{
+		 		var k = maybe_keys[i];
+		 		if(k in blacklist)
+		 		{
+		 			continue;
+		 		}
+		 		keys.push(k);
+		 	}
 		 	
 		 	
 		 	
@@ -61,6 +86,7 @@
 		    }
 			};
 		 	//keys.sort(function(a, b){return  parseFloat(all[b].timestamp)  - all[a].timestamp || parseFloat(all[a].seen) - parseFloat(all[b].seen)});
+		 	console.log(keys);
 		 	keys.sort(comper);
 		 	
 		 	return keys;
@@ -81,10 +107,31 @@
 // 		 	
 		 	// return all[get_sorted()[0]];
 		 	var keys = get_sorted();
+		 	if(keys.length == 0)
+		 		return false;
 		 	return all[keys[0]];
 
 		 }
 		 
+		 
+		 
+		 
+		 
+		 // function black_list_any
+		 function blacklist_all()
+		 {
+		 	//TBD
+		 	var keys = Object.keys(all);
+		 	for(var i=0; i<keys.length; i+=1)
+		 	{
+		 		blacklist[keys[i]] = 1;
+		 	}
+		 }
+		 
+		 function blacklist_most()
+		 {
+		 	
+		 }
 		 
 		 
 		 function get_next_old()
@@ -106,6 +153,7 @@
 		 
 		  function poll()
 		  {
+		  	console.log("poll");
 		  	//TBD do not update old stuff
 		  	$.get( "poll.php", function( data ) {
   			   var files = data['files'];
@@ -115,6 +163,8 @@
   			   	
   			   	if(f.timestamp > latest)
   			   		latest = f.timestamp;
+  			   		
+  			   	
   			   	f['seen'] = 0;
   			   	if( f.file in all == false)
   			   	{
@@ -148,12 +198,13 @@
 				
 				
 				$(document).keydown(function(e) {
+					console.log("KEY "+e.which)
 				    switch(e.which) {
 				        case 37: // left
 				        break;
 				
 				        case 38: // up
-				        talloffset += 10;
+				        talloffset += 1;
 				        changeStyle();
 				        break;
 				
@@ -161,13 +212,31 @@
 				        break;
 				
 				        case 40: // down
-				        talloffset -= 10;
+				        talloffset -= 1;
 				        changeStyle();
 				        break;
 				        
 				        case 78: // 'n'
 				        next_video();
 				        break;
+				        
+				        //l for live only
+				        case 76: // 'l'
+				        console.log("BLACKLISTING");
+				        playing = false;
+				        replay_videos = false;
+				        blacklist_all();
+				        next_video();
+				        break;
+				        
+						//r for replay mode
+				        case 82: // 'r'
+				        playing = false;
+				        blacklist = {};
+				        replay_videos = true;
+				        next_video();
+				        break;
+				        
 				
 				        default: return; // exit this handler for other keys
 				    }
@@ -177,9 +246,16 @@
 		</script>
 		
 		<style>
+		html
+		{
+			background-color: black;
+		}
 		body{
 			padding: 0px;
 			margin: 0px;
+			background-color: black;
+			width: 100%;
+			height: 100%;
 		}
 		#container {
 /*			width: 320px;*/
@@ -187,7 +263,7 @@
 			position: relative;
     height: 100%;
     width: 100%;
-			background-color: lightblue;
+			background-color: black;
 			padding: 0px;
 			margin: 0px;
 			}
@@ -200,6 +276,7 @@
 /*			min-width: 100%; */
 			min-height: 100%;
 			overflow: hidden;
+			background-color: black;
 
 		}
 		</style>
