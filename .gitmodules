@@ -1,6 +1,6 @@
 [submodule "MediaStreamRecorder"]
 	path = MediaStreamRecorder
-	url = git@github.com:streamproc/MediaStreamRecorder.git
+	url = https://github.com/streamproc/MediaStreamRecorder.git
 [submodule "face-detection"]
 	path = face-detection
-	url = git@github.com:neave/face-detection.git
+	url = https://github.com/yangrongwei/refer-WebRTC-js-sample-face-detection.git
