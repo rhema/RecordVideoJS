@@ -38,16 +38,16 @@
 	    	
 	    	
 	    -->
-	    
+	    <!-- 
 	    
    	<script src='MediaStreamRecorder/MediaStreamRecorder-v1.2.js'></script>
 	    <script src='MediaStreamRecorder/VideoStreamRecorder/WhammyRecorder.js'></script>
         <script src='MediaStreamRecorder/VideoStreamRecorder/WhammyRecorderHelper.js'></script>
         <script src='MediaStreamRecorder/VideoStreamRecorder/lib/whammy.js'></script>
         <script src='MediaStreamRecorder/AudioStreamRecorder/MediaRecorder.js'></script>
-	    	
+	    	 -->
 		
-		
+		<script src='MediaStreamRecorder/MediaStreamRecorder-new.js'></script>
 
 		<script src="ccv.js"></script>
 		<script src="face.js"></script>
@@ -84,6 +84,8 @@
 			var pw = 320;
 			var ph = 240;
 			var face_ratio = .5;// 5.0/8.0; // face detection does not measure from chin to head...
+
+			var needed_good_count = 1; //20
 
 			var recording = false;
 
@@ -273,7 +275,7 @@
 						if(score > 95) {
 							count_good += 1;
 							//start saving.
-							if(count_good > 20 && recording == false) {
+							if(count_good > needed_good_count && recording == false) {
 								recording = true;
 								//MORE
 								
@@ -320,6 +322,22 @@
 			padding: .2em .4em;
 			width: 60px;
 			text-align: center;
+			}
+
+			#webcam-video
+			{
+				    transform: rotateY(180deg);
+				    -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+				    -moz-transform:rotateY(180deg); /* Firefox */
+
+			}
+
+			#hideme
+			{
+				    transform: rotateY(180deg);
+				    -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+				    -moz-transform:rotateY(180deg); /* Firefox */
+
 			}
 
 			/*Maybe no change needed...*/
@@ -478,31 +496,54 @@
 				videosContainer.appendChild(video);
 				videosContainer.appendChild(document.createElement('hr'));
 
-				mediaRecorder = new MediaStreamRecorder(stream);
-				mediaRecorder.mimeType = 'video/webm';
+				// var options = {mimeType: 'video/webm;codecs=vp9'};
+				mediaRecorder = new MediaStreamRecorder(stream);//, options);
+				mediaRecorder.mimeType =  'video/webm;codecs=vp9' ;//'video/webm';
+				
 				// this line is mandatory
 				console.log("RECORDER TIME... "+pw +" "+ph);
 				mediaRecorder.videoWidth = pw;
 				mediaRecorder.videoHeight = ph;
 				mediaRecorder.ondataavailable = function(blob) {
+					
+					// console.log("avalable");
+					// console.log(blob);
+					keep_me_blobby = blob;
 					// console.log("NOT SAVING YET"); //please get..
 					// return;
+					//https://developers.google.com/web/updates/2016/01/mediarecorder but why...
+
+					// console.log("is there a blob 2?");
+					// console.log(blob2);
+
+					//have to user a reader.why so broken? update media recorer.
 
 					//how doe the data go
-					// var a = document.createElement('a');
-					// a.target = '_blank';
-					// a.innerHTML = 'Open Recorded Video No. ' + (index++) + ' (Size: ' + bytesToSize(blob.size) + ') Time Length: ' + getTimeLength(timeInterval);
+					var timeInterval = total_seconds_to_save * 1000;
+
+					var abc = document.createElement('a');
+					abc.target = '_blank';
+					abc.innerHTML = 'Open Recorded Video No. ' + (index++) + ' (Size: ' + bytesToSize(blob.size) + ') Time Length: ' + getTimeLength(timeInterval);
 					// SO CLOSE TO UPLOAD... :)
-					// a.href = URL.createObjectURL(blob);
+					abc.href = window.URL.createObjectURL(blob);
+
+					bigblob = abc.href;
+					console.log("big blob..");
+					console.log(window.URL.createObjectURL(blob));
 					//
-					// videosContainer.appendChild(a);
-					// videosContainer.appendChild(document.createElement('hr'));
-					// theblob = blob;
+					videosContainer.appendChild(document.createElement('hr'));
+					videosContainer.appendChild(abc);
+					videosContainer.appendChild(document.createElement('hr'));
+
+					// theblob = blob; //http://i.imgur.com/5kFO1T5.png // http://i.imgur.com/5kFO1T5.gif
+
+					
 					finishedRecording = true;
-					$("#header").html(" <img src='http://i.imgur.com/WAO5PNY.gif'/> Saving.... please wait");
+					$("#header").html(" <img src='http://i.imgur.com/5kFO1T5.gif'/> Saving.... please wait");
 					mediaRecorder.stop();
-					saveBlob(blob);
 					console.log("SAVING");
+					// return;
+					saveBlob(blob);
 					// probably not really using this...
 					$("#videos-container").remove();
 					//get rid of video... stop movint this stuff around.
