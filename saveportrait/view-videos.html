@@ -13,6 +13,9 @@
 		 var playing = false;
 		 var replay_videos = true;
 		 
+		 var playing_link="";
+
+		 var last_started = Date.now();
 		 
 		 function next_video()
 		 {
@@ -26,6 +29,7 @@
 		 		$("#container").html('');
 		 		return;
 		 	}
+		 	last_started = Date.now();
 		 	video.seen += 1;
 		 	playing = true;
 		 	if(replay_videos == false)
@@ -35,12 +39,14 @@
 		 	//add loop back?
 		 	$("#vid").unbind();
 		 	$("#container").html('<video autoplay id="vid"> <source src="'+video.file+'" type="video\/webm"> <\/video>');
+		 	playing_link = video.file;
 		 	changeStyle();
 		 	$("#vid").bind("ended", function() {
 		 	   playing = false;
 			   next_video();
 			});
 		 	
+		 	do_stats();
 		 }
 		 
 		 
@@ -151,6 +157,52 @@
 		 
 		 var latest = 0;
 		 
+		 function do_stats()
+		 {
+		 	$("#total_videos").text(Object.keys(all).length);
+		 	$("#playing").text(playing+"");
+		 	if(replay_videos)
+		 	{
+		 		$("#mode").text("Replay Videos");
+		 	}
+		 	else
+		 	{
+		 		$("#mode").text("Live Mode");
+		 	}
+
+		 	if(playing)
+		 	{
+		 		//link
+		 		$("#link").html("<a href='"+playing_link+"'>"+playing_link+"</a>");
+		 	}
+		 	else
+		 	{
+		 		$("#link").html("");
+		 	}
+		 	var videos_available = Object.keys(all).length - Object.keys(blacklist).length;
+
+		 	$("#videos_available").text(videos_available);
+
+		 	var videos_not_played_this_session = 0;
+		 	for(var i in all)
+		 	{
+		 		if(all[i].seen == 0)
+		 		{
+		 			videos_not_played_this_session+=1;
+		 		}
+		 	}
+		 	$("#not_played").text(videos_not_played_this_session);
+
+		 	var since_start_of_last = Math.floor( (Date.now() - last_started)/1000);
+		 	$("#since_start_of_last").text(since_start_of_last);
+		 	// var videos_not_played_this_session = ;
+			 // var playing = false;
+			 // var replay_videos = true;
+			 
+			 // var playing_link="";
+
+		 }
+
 		  function poll()
 		  {
 		  	console.log("poll");
@@ -180,15 +232,20 @@
   			   		next_video(); //start first video
   			   }
 			});
-		  	setTimeout("poll()", 1500);//not sure hw often to poll...
+		  	setTimeout("poll()", 5000);//not sure hw often to poll...
 		  }
+
+		  setInterval(do_stats, 1000);
 		  
 		  var talloffset = 0; //for zooming in...
+		  var rightoffset = 0;
 		  
 		  function changeStyle()
 		  {
 		  	$("#vid").css("top",(-talloffset/2)+"%");
 		  	$("#vid").css("height",(100+talloffset)+"%");
+
+		  	$("#vid").css("margin-left",(rightoffset)+"%");
 		  }
 		
 		  $(document).ready(function() {
@@ -201,6 +258,8 @@
 					console.log("KEY "+e.which)
 				    switch(e.which) {
 				        case 37: // left
+				         rightoffset -= .25;
+				         changeStyle();
 				        break;
 				
 				        case 38: // up
@@ -209,6 +268,8 @@
 				        break;
 				
 				        case 39: // right
+				        rightoffset += .25;
+				        changeStyle();
 				        break;
 				
 				        case 40: // down
@@ -236,10 +297,17 @@
 				        replay_videos = true;
 				        next_video();
 				        break;
+
+				        case 27: // esc
+						$(".overlay").toggle();
+				        break;
+
+				        
 				        
 				
-				        default: return; // exit this handler for other keys
+				        default: break; // exit this handler for other keys
 				    }
+				    do_stats();
 				    e.preventDefault(); // prevent the default action (scroll / move caret)
 				});
 			});
@@ -279,6 +347,14 @@
 			background-color: black;
 
 		}
+
+		.overlay
+		{
+			background-color: rgba(100, 100, 100, 0.4);
+			position: absolute;
+			color: white;
+			left: 30%;
+		}
 		</style>
 	</head>
 	
@@ -289,5 +365,37 @@
 		<div id=container>
 <!-- 			webm goes here -->
 		</div>
+		<div class="overlay"> 
+		<h2> Press ESC to toggle this debug output.</h2>
+        <h3>Hot Keys<h3>
+        <ul>
+		  <li>n: next video</li>
+		  <li>r: use "replay videos" mode. shows most recent videos, but uses other content also.</li>
+		  <li>l: use "live videos" mode. Only play videos that were made before this page was loaded.</li>
+		  <li>up (cursor key): increase video size</li>
+		  <li>down: decrease video size</li>
+		  <li>left: shift vid position left</li>
+		  <li>right: shift vid position right</li>
+		</ul>
+
+		<h3>Stats<h3>
+        <ul>
+		  <li>total videos: <span id="total_videos"></span></li>
+		  <li>videos in play list: <span id="videos_available"></span></li>
+		  <li>is playing: <span id="playing"></span></li>
+		  <li>link:  <span id="link"></span> </li>
+		  <li>video mode: <span id="mode"></span></li>
+		  <li>videos not played this session: <span id="not_played"></span></li>
+
+		  <li>since start of last: <span id="since_start_of_last"></span></li>
+		  
+		  
+		   <!-- <li>total videos: <span id="total_videos"></span></li> -->
+		</ul>
+
+<!-- needs more debug content that goes live etc... -->
+
+		 </div>
+		}
 	</body>
 </html>
